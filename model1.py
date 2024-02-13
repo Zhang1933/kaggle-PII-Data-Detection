@@ -4,12 +4,13 @@ from transformers import AutoModelForTokenClassification
 from cfg import *
 
 class NLPModel(nn.Module):
-    def __init__(self,id2label,label2id):
+    def __init__(self,id2label,label2id,modelname,training=True):
         super().__init__()
-        self.model=AutoModelForTokenClassification.from_pretrained(Config.model_name, num_labels=len(id2label),
+        self.model=AutoModelForTokenClassification.from_pretrained(modelname, num_labels=len(id2label),
     id2label=id2label,label2id=label2id,ignore_mismatched_sizes=True)#label映射到id
         self.lossfunc = nn.CrossEntropyLoss()
         self.num_labels=len(id2label)
+        if training: self.model.save_pretrained(Config.modelsavepath)
 
     def forward(self,input_ids, token_type_ids,attention_mask,labels=None):
         output = self.model(input_ids, token_type_ids,attention_mask)

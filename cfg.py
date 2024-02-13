@@ -32,7 +32,7 @@ class Config:
 
     batch_size=4 # TODO:change batch size
     logging_steps=100
-    epochs=4
+    epochs=3
     lr=2e-5
     weight_decay=0.01
     accumulation_steps=1 # batch size不同，不能直接除。有空再修
