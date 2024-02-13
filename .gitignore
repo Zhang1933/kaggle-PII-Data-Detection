@@ -162,3 +162,6 @@ nltk_data
 unidecode
 *.csv
 *.json
+modelsave/
+checkpoint/
+playground.py

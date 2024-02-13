@@ -13,7 +13,7 @@ class NLPModel(nn.Module):
 
     def forward(self,input_ids, token_type_ids,attention_mask,labels=None):
         output = self.model(input_ids, token_type_ids,attention_mask)
-        # batchsize*seq length*12
+        # batchsize*seq length
         logit=output[0]
         loss=0
         logit=logit.view(-1,logit.shape[-1])

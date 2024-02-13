@@ -1,11 +1,9 @@
-sklearn
-pandas
-torch
-numpy
+scikit-learn
 transformers
 matplotlib
-seaborn
 tqdm
-
+datasets
+seqeval
+sentencepiece
 nltk
 -e unidecode
