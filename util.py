@@ -10,14 +10,15 @@ from tqdm import tqdm,tqdm_notebook
 
 # batch 对齐
 class Collate:
-    def __init__(self, tokenizer):
+    def __init__(self, tokenizer,if_train=True):
         self.tokenizer = tokenizer
+        self.if_train=if_train
     def __call__(self, batch):
         output = dict()
         output["ids"] = [sample["berttokenids"] for sample in batch]
         output["type_ids"] = [sample["berttokentoken_type_ids"] for sample in batch]
         output["mask"] = [sample["berttokenmask"] for sample in batch]
-        output["targets"] = [sample["bertlabels"] for sample in batch]
+        if self.if_train: output["targets"] = [sample["bertlabels"] for sample in batch]
         
          # calculate max token length of this batch
         batch_max = max([len(ids) for ids in output["ids"]])
@@ -27,18 +28,18 @@ class Collate:
             output["ids"] = [s + (batch_max - len(s)) * [self.tokenizer.pad_token_id] for s in output["ids"]]
             output["mask"] = [s + (batch_max - len(s)) * [0] for s in output["mask"]]
             output["type_ids"] = [s + (batch_max - len(s)) * [0] for s in output["type_ids"]]
-            output["targets"] = [s + (batch_max - len(s)) * [-100] for s in output["targets"]]
+            if self.if_train: output["targets"] = [s + (batch_max - len(s)) * [-100] for s in output["targets"]]
         else:
             output["ids"] = [(batch_max - len(s)) * [self.tokenizer.pad_token_id] + s for s in output["ids"]]
             output["mask"] = [(batch_max - len(s)) * [0] + s for s in output["mask"]]
             output["type_ids"] = [(batch_max - len(s)) * [0] + s for s in output["type_ids"]]
-            output["targets"] = [(batch_max - len(s)) * [-100] + s for s in output["targets"]]
+            if self.if_train: output["targets"] = [(batch_max - len(s)) * [-100] + s for s in output["targets"]]
 
         # convert to tensors
         output["ids"] = torch.tensor(output["ids"], dtype=torch.long)
         output["mask"] = torch.tensor(output["mask"], dtype=torch.long)
         output["type_ids"] = torch.tensor(output["type_ids"], dtype=torch.long)
-        output["targets"] = torch.tensor(output["targets"], dtype=torch.long)
+        if self.if_train: output["targets"] = torch.tensor(output["targets"], dtype=torch.long)
 
         return output
 
@@ -60,7 +61,7 @@ def split_by_paragraph(text):
     return res
 
 # 分句子
-def split_document(text):
+def split_token(text):
     """
         分句子，返回列表
     """
@@ -87,94 +88,85 @@ def split_document(text):
         data_out.append("".join(split_sentence[idx-Config.stride:length]))
     return data_out
 
-def preprocesss(example,tokenizer,label2id,if_train=True):
-    """
-        预处理
-        需要特判token为空字符的标签情况。需要特判berttoken多对一映射token情况,联系前后token判断一下就行,if if_train =true,all bertlabels=-100
-    """
-    # unicode to ascii
-    example['full_text']=unidecode(example['full_text'],errors='replace',replace_str='*')
-    example['full_text']=example['full_text'].lower()
-    for j in range(len(example['tokens'])):
-        example['tokens'][j]=unidecode(example['tokens'][j],errors='replace',replace_str='*')
-        example['tokens'][j]=example['tokens'][j].lower().strip()
+def train_preprocesss(example,tokenizer,label2id):
+    # rebuild text from tokens
 
-    # split text
-    example['splited_sens']=split_document(example['full_text'])
-    
-    example['berttokenpos2orgtokenpos']=[]
     example['bertlabels']=[]
     example['berttokenids']=[]
     example['berttokenmask']=[]
     example['berttokentoken_type_ids']=[]
-    
-    # tokenize splited_sen
-    previs_sep=0
-    org_token_id=0
-    for splited_sen in example['splited_sens']:
-        out=tokenizer(splited_sen)
-        splited_strtokens=tokenizer.convert_ids_to_tokens(out['input_ids'])
-        splited_token_len=len(splited_strtokens)
-        berttoken_pos2orgtokenpos=[-1]*splited_token_len
-        bertlabel=[-100]*splited_token_len        
-        find_start=0
-        splited_token_id=1
-        nothit=0 # 连续多次没映射到说明有问题
-        while splited_token_id < splited_token_len-1: # 不处理开头与末尾处的[CLS]与[SEP]
-            if splited_strtokens[splited_token_id]=='[SEP]':
-                bertlabel[splited_token_id]=-100
-                berttoken_pos2orgtokenpos[splited_token_id]=-1
-                if  splited_token_id!=1:
-                    previs_sep=org_token_id
-                else:
-                    org_token_id=previs_sep
-                splited_token_id+=1
+
+    tokens_split_list=[]
+    trailing_whitespace_split_list=[]
+    labels_split_list=[]
+
+    right_idx=0
+    for i in range(0,len(example['tokens'])):
+        if example['tokens'][i] == '\n\n':
+            tokens_split_list.append(example['tokens'][right_idx:i+1])
+            trailing_whitespace_split_list.append(example['trailing_whitespace'][right_idx:i+1])
+            labels_split_list.append(example['labels'][right_idx:i+1])
+            right_idx=i+1
+    if  len(tokens_split_list)==0:
+        tokens_split_list.append( example['tokens'])
+        trailing_whitespace_split_list.append( example['trailing_whitespace'])
+        labels_split_list.append(example['labels'])
+
+    for tokens_list,lables_list,trailing_whitespace_list in zip(
+        tokens_split_list,labels_split_list,trailing_whitespace_split_list):
+
+        text = []
+        labels = []
+        for t, l, ws in zip(
+            tokens_list, lables_list, trailing_whitespace_list
+        ):
+            text.append(t)
+            labels.extend([l] * len(t))
+
+            if ws:
+                text.append(" ")
+                labels.append("O")
+
+        # actual tokenization
+        tokenized = tokenizer("".join(text), return_offsets_mapping=True)
+
+        labels = np.array(labels)
+
+        text = "".join(text)
+        token_labels = []
+
+        for start_idx, end_idx in tokenized.offset_mapping:
+            # CLS token
+            if start_idx == 0 and end_idx == 0:
+                token_labels.append(label2id["O"])
                 continue
-            subtokenstr=splited_strtokens[splited_token_id]
-            if(splited_strtokens[splited_token_id][0]=='▁') and len(splited_strtokens[splited_token_id])!=1:
-                    subtokenstr=subtokenstr[1:]
-            # find start of the substring
-            find_start=example['tokens'][org_token_id].find(subtokenstr,find_start)
-            if find_start != -1:
-                berttoken_pos2orgtokenpos[splited_token_id]=org_token_id
-                if if_train: bertlabel[splited_token_id]=label2id[example['labels'][org_token_id]]
-                find_start+=len(subtokenstr)
-                nothit=0
-            else:
-                nothit+=1
-                if nothit>3:
-                    print("Warning:failed to hit multiple times in a row,nothit:{},doc_id:{}".format(nothit,example['document'])) # 方便调试
-            if example['tokens'][org_token_id]:
-                if find_start==-1:
-                    # example['tokens'][org_token_id]='can',subtokenstr='cannot' 的情况
-                    tmp_find=0
-                    berttoken_pos2orgtokenpos[splited_token_id]=org_token_id # 只记录第一个label
-                    if if_train: bertlabel[splited_token_id]=label2id[example['labels'][org_token_id]]
-                    while subtokenstr.find(example['tokens'][org_token_id],tmp_find)!=-1:
-                        tmp_find+=len(example['tokens'][org_token_id])
-                        org_token_id+=1
-                    org_token_id-=1
-                splited_token_id+=1
-            if(find_start==-1 or find_start==len(example['tokens'][org_token_id])):
-                org_token_id+=1
-                find_start=0
-        example['berttokenids'].append(out['input_ids'])
-        example['berttokenmask'].append(out['attention_mask'])
-        example['berttokentoken_type_ids'].append(out['token_type_ids'])
-        example['berttokenpos2orgtokenpos'].append(berttoken_pos2orgtokenpos)
-        example['bertlabels'].append(bertlabel)
+
+            # case when token starts with whitespace
+            if text[start_idx].isspace():
+                start_idx += 1
+
+            token_labels.append(label2id[labels[start_idx]])
+
+        example['bertlabels'].append(token_labels)
+        example['berttokenids'].append(tokenized['input_ids'])
+        example['berttokenmask'].append(tokenized['attention_mask'])
+        example['berttokentoken_type_ids'].append(tokenized['token_type_ids'])
+
     return example
 
 
-def expanddataset(ds):
+def expanddataset(ds,if_train=True):
     """
         将dataset的 bertlabels,berttokenpos2orgtokenpos expand到列,返回新的dataset
     """
     df=ds.to_pandas()
-    merge_list_key=['berttokenpos2orgtokenpos','berttokenids','berttokenmask','berttokentoken_type_ids','bertlabels']
+    merge_list_key=[]
     # s1 = pd.DataFrame(df.pop('bertlabels').values.tolist(), 
     #       index=df.index).stack().rename('bertlabels').reset_index(level=1, drop=True)
-
+    if if_train :
+        merge_list_key=['berttokenids','berttokenmask','berttokentoken_type_ids','bertlabels']
+    else:
+        merge_list_key=['berttokenids','berttokenmask','berttokentoken_type_ids','token_map','offset_mapping']
     s_l=[]
     for i in merge_list_key:
         tmp_s= pd.DataFrame(df.pop(i).values.tolist(), 

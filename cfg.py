@@ -18,7 +18,7 @@ import numpy as np
 class Config:
     workdir=os.path.dirname(os.path.abspath(__file__)) #TODO change workdir
 
-    seed=2023 #随机种子
+    seed=42 #随机种子
     model_name="microsoft/deberta-v3-base" # TODO:microsoft/deberta-v3-large
     modelsavepath = workdir+'//modelsave/'
     data_path=workdir+"/dataset/"
@@ -30,7 +30,7 @@ class Config:
     # O judge threshold
     threshold=0.9
 
-    batch_size=4 # TODO:change batch size
+    batch_size=10 # TODO:change batch size
     logging_steps=100
     epochs=3
     lr=2e-5
