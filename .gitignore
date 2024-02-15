@@ -165,3 +165,4 @@ unidecode
 modelsave/
 checkpoint/
 playground.py
+inference.py

@@ -28,7 +28,7 @@ class Config:
     stride=3 # overlap count
 
     # O judge threshold
-    threshold=0.9
+    threshold=0.95
 
     batch_size=10 # TODO:change batch size
     logging_steps=100

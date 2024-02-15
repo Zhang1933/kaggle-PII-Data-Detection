@@ -18,10 +18,13 @@ class Collate:
         output["ids"] = [sample["berttokenids"] for sample in batch]
         output["type_ids"] = [sample["berttokentoken_type_ids"] for sample in batch]
         output["mask"] = [sample["berttokenmask"] for sample in batch]
-        if self.if_train: output["targets"] = [sample["bertlabels"] for sample in batch]
-        
+        if self.if_train: 
+            output["targets"] = [sample["bertlabels"] for sample in batch]
+        else :
+            output["token_org_length"]=[len(ids) for ids in output["ids"]]
+
          # calculate max token length of this batch
-        batch_max = max([len(ids) for ids in output["ids"]])
+        batch_max = max(output["token_org_length"])
 
         # add padding
         if self.tokenizer.padding_side == "right":
@@ -175,10 +178,21 @@ def expanddataset(ds,if_train=True):
     df = df.join(pd.concat(s_l, axis=1))
     return df.reset_index(drop=True)
 
-def logit2truepredic(predictions):
-    softmaxed_pred=np.exp(predictions) / np.sum(np.exp(predictions), axis = 1).reshape(-1,1)
-    preds = predictions.argmax(-1)
-    preds_without_O = softmaxed_pred[:,:12].argmax(-1)
-    O_preds = predictions[:,12]
-    preds_final = np.where(O_preds < Config.threshold, preds_without_O , preds)
+def logit2truepredic(batch_predictions,batch_org_len):
+    """
+        按顺序返回列表
+    """
+
+    preds_final=[]
+    batch_len=max(batch_org_len)
+    for i,l in enumerate(batch_org_len):
+        predictions=batch_predictions[i*batch_len:i*batch_len+l]
+
+        softmaxed_pred=np.exp(predictions) / np.sum(np.exp(predictions), axis = 1).reshape(-1,1)
+        preds = predictions.argmax(-1)
+        preds_without_O = softmaxed_pred[:,:12].argmax(-1)
+        O_preds = predictions[:,12]
+        preds_final.append( list(np.where(O_preds < Config.threshold, preds_without_O , preds)))
+
+
     return preds_final
