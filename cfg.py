@@ -24,11 +24,11 @@ class Config:
     data_path=workdir+"/dataset/"
 
     split_by_paragraph=True #False to split by sentence windows
-    max_sen_count=8 # for sentence sliding windows 
-    stride=3 # overlap count
+    max_length=2048 # for sentence sliding windows 
+    stride=16 # overlap count
 
     # O judge threshold
-    threshold=0.95
+    threshold=0.9
 
     batch_size=10 # TODO:change batch size
     logging_steps=100

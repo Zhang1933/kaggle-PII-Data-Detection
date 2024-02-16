@@ -20,8 +20,7 @@ class Collate:
         output["mask"] = [sample["berttokenmask"] for sample in batch]
         if self.if_train: 
             output["targets"] = [sample["bertlabels"] for sample in batch]
-        else :
-            output["token_org_length"]=[len(ids) for ids in output["ids"]]
+        output["token_org_length"]=[len(ids) for ids in output["ids"]]
 
          # calculate max token length of this batch
         batch_max = max(output["token_org_length"])
@@ -99,46 +98,38 @@ def train_preprocesss(example,tokenizer,label2id):
     example['berttokenmask']=[]
     example['berttokentoken_type_ids']=[]
 
-    tokens_split_list=[]
-    trailing_whitespace_split_list=[]
-    labels_split_list=[]
+    # rebuild text from tokens
+    text = []
+    labels = []
 
-    right_idx=0
-    for i in range(0,len(example['tokens'])):
-        if example['tokens'][i] == '\n\n':
-            tokens_split_list.append(example['tokens'][right_idx:i+1])
-            trailing_whitespace_split_list.append(example['trailing_whitespace'][right_idx:i+1])
-            labels_split_list.append(example['labels'][right_idx:i+1])
-            right_idx=i+1
-    if  len(tokens_split_list)==0:
-        tokens_split_list.append( example['tokens'])
-        trailing_whitespace_split_list.append( example['trailing_whitespace'])
-        labels_split_list.append(example['labels'])
+    for t, l, ws in zip(
+        example["tokens"], example["labels"], example["trailing_whitespace"]
+    ):
+        text.append(t)
+        labels.extend([l] * len(t))
 
-    for tokens_list,lables_list,trailing_whitespace_list in zip(
-        tokens_split_list,labels_split_list,trailing_whitespace_split_list):
+        if ws:
+            text.append(" ")
+            labels.append("O")
 
-        text = []
-        labels = []
-        for t, l, ws in zip(
-            tokens_list, lables_list, trailing_whitespace_list
-        ):
-            text.append(t)
-            labels.extend([l] * len(t))
+    # actual tokenization
+    tokenizeds = tokenizer("".join(text),
+                        stride=Config.stride,
+                        max_length=Config.max_length,
+                        truncation=True ,
+                        return_overflowing_tokens=True,
+                        return_offsets_mapping=True,
+                        )
 
-            if ws:
-                text.append(" ")
-                labels.append("O")
+    labels = np.array(labels)
 
-        # actual tokenization
-        tokenized = tokenizer("".join(text), return_offsets_mapping=True)
-
-        labels = np.array(labels)
-
-        text = "".join(text)
+    text = "".join(text)
+    
+    
+    for  i in range(len( tokenizeds['input_ids'])):
         token_labels = []
 
-        for start_idx, end_idx in tokenized.offset_mapping:
+        for start_idx, end_idx in tokenizeds['offset_mapping'][i]:
             # CLS token
             if start_idx == 0 and end_idx == 0:
                 token_labels.append(label2id["O"])
@@ -151,9 +142,9 @@ def train_preprocesss(example,tokenizer,label2id):
             token_labels.append(label2id[labels[start_idx]])
 
         example['bertlabels'].append(token_labels)
-        example['berttokenids'].append(tokenized['input_ids'])
-        example['berttokenmask'].append(tokenized['attention_mask'])
-        example['berttokentoken_type_ids'].append(tokenized['token_type_ids'])
+        example['berttokenids'].append(tokenizeds['input_ids'][i])
+        example['berttokenmask'].append(tokenizeds['attention_mask'][i])
+        example['berttokentoken_type_ids'].append(tokenizeds['token_type_ids'][i])
 
     return example
 
@@ -169,7 +160,7 @@ def expanddataset(ds,if_train=True):
     if if_train :
         merge_list_key=['berttokenids','berttokenmask','berttokentoken_type_ids','bertlabels']
     else:
-        merge_list_key=['berttokenids','berttokenmask','berttokentoken_type_ids','token_map','offset_mapping']
+        merge_list_key=['berttokenids','berttokenmask','berttokentoken_type_ids','offset_mapping']
     s_l=[]
     for i in merge_list_key:
         tmp_s= pd.DataFrame(df.pop(i).values.tolist(), 
@@ -196,3 +187,4 @@ def logit2truepredic(batch_predictions,batch_org_len):
 
 
     return preds_final
+
