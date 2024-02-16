@@ -160,9 +160,10 @@ cython_debug/
 #.idea/
 nltk_data
 unidecode
-*.csv
+submission.csv
 *.json
 modelsave/
 checkpoint/
 playground.py
 inference.py
+dataset/

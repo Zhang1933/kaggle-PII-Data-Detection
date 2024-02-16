@@ -1,5 +1,5 @@
 模型-id,训练时score,training dataset,训练时分割方式,推理时分割方式,train dataset score,LB,提交,阈值,说明
 deberta-base-1,0.991,baseline,分割split by token'\n\n'(上下文可能过短),split by token'\n\n',0.951,0.904,https://www.kaggle.com/code/xorspace/debert-base?scriptVersionId=162905902,0.9,
-deberta-base-1,0.991,baseline,split by token'\n\n'(paragraph分割),"滑动窗口(2048,16)",0.973,,,0.9,
-deberta-base-2,0.989,baseline,"滑动窗口(1024,16)","滑动窗口(2048,16)",0.977,0.948,https://www.kaggle.com/code/xorspace/debert-base?scriptVersionId=163078317,0.9,
+deberta-base-1,0.991,baseline,split by token'\n\n'(paragraph分割),"滑动窗口(2048,16)",0.973,0.938,https://www.kaggle.com/code/xorspace/debert-base?scriptVersionId=163091164,0.9,
+deberta-base-2,0.989,baseline,"滑动窗口(1024,16)","滑动窗口(2048,16)",0.977,0.948,https://www.kaggle.com/code/xorspace/debert-base?scriptVersionId=163078317,0.9,看起来滑动窗口对模型训练有丶用
 注:,id相同为同一个模型,baseline语料库:https://www.kaggle.com/code/valentinwerner/915-deberta3base-training,,,,,,,
