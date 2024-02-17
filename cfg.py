@@ -18,19 +18,20 @@ import numpy as np
 class Config:
     workdir=os.path.dirname(os.path.abspath(__file__)) #TODO change workdir
 
+    num_proc=10
     seed=42 #随机种子
-    model_name="microsoft/deberta-v3-base" # TODO:microsoft/deberta-v3-large
+    model_name="microsoft/deberta-v3-large" # TODO:microsoft/deberta-v3-large
     modelsavepath = workdir+'//modelsave/'
     data_path=workdir+"/dataset/"
 
     split_by_paragraph=True #False to split by sentence windows
-    max_length=2048 # for sentence sliding windows 
-    stride=16 # overlap count
+    max_length=1024 # for sentence sliding windows 
+    stride=256 # overlap count
 
     # O judge threshold
     threshold=0.9
 
-    batch_size=10 # TODO:change batch size
+    batch_size=3 # TODO:change batch size
     logging_steps=100
     epochs=3
     lr=2e-5
