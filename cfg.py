@@ -28,8 +28,6 @@ class Config:
     max_length=1024 # for sentence sliding windows 
     stride=256 # overlap count
 
-    # O judge threshold
-    threshold=0.9
 
     batch_size=3 # TODO:change batch size
     logging_steps=100

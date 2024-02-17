@@ -2,7 +2,7 @@
 deberta-base-1,0.991,baseline,分割split by token'\n\n'(上下文可能过短),split by token'\n\n',0.951,0.904,https://www.kaggle.com/code/xorspace/debert-base?scriptVersionId=162905902,0.9,
 deberta-base-1,0.991,baseline,split by token'\n\n'(paragraph分割),"滑动窗口(2048,16)",0.973,0.938,https://www.kaggle.com/code/xorspace/debert-base?scriptVersionId=163091164,0.9,
 deberta-base-2,0.989,baseline,"滑动窗口(1024,16)","滑动窗口(2048,16)",0.977,0.948,https://www.kaggle.com/code/xorspace/debert-base?scriptVersionId=163078317,0.9,看起来滑动窗口对模型训练有丶用
-deberta-base-1,0.989,,"滑动窗口(1024,16)","滑动窗口(1024,256)",,,,0.9,
-deberta-large-1,0.997,[competition+nicholas](https://www.kaggle.com/competitions/pii-detection-removal-from-educational-data/discussion/473139),"滑动窗口(1024,256)","滑动窗口(1024,256)",0.982,0.954,https://www.kaggle.com/competitions/pii-detection-removal-from-educational-data/submissions#,0.9,baseline:https://www.kaggle.com/competitions/pii-detection-removal-from-educational-data/discussion/473139
-,,,,,,,,,
-注:,id相同为同一个模型,baseline语料库:https://www.kaggle.com/code/valentinwerner/915-deberta3base-training,,,,,,,
+deberta-base-2,0.989,,"滑动窗口(1024,16)","滑动窗口(1024,256)",,,,0.9,
+deberta-large-1,0.997,[competition+nicholas](https://www.kaggle.com/competitions/pii-detection-removal-from-educational-data/discussion/473139),"滑动窗口(1024,256)","滑动窗口(1024,256)",0.982,0.954,https://www.kaggle.com/code/xorspace/debert-base?scriptVersionId=163160342,0.9,baseline:https://www.kaggle.com/competitions/pii-detection-removal-from-educational-data/discussion/473139
+deberta-large-1,0.997,,,"滑动窗口(1024,256)",0.981,0.959,https://www.kaggle.com/code/xorspace/debert-base?scriptVersionId=163167747,0.9875,
+注:,id相同为同一个模型推理,baseline语料库:https://www.kaggle.com/code/valentinwerner/915-deberta3base-training,,,,,,,
