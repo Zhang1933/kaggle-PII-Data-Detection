@@ -1,9 +1,0 @@
-scikit-learn
-transformers
-matplotlib
-tqdm
-datasets
-seqeval
-sentencepiece
-nltk
--e unidecode
