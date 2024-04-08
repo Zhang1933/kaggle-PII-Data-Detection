@@ -1,5 +1,5 @@
-import numpy as np#进行矩阵运算的库
-import random#提供了一些用于生成随机数的函数
+import numpy as np
+import random
 import torch
 from transformers import AutoTokenizer
 import json
@@ -18,30 +18,28 @@ import numpy as np
 class Config:
     workdir=os.path.dirname(os.path.abspath(__file__)) #TODO change workdir
 
+    num_proc=10
     seed=42 #随机种子
-    model_name="microsoft/deberta-v3-base" # TODO:microsoft/deberta-v3-large
-    modelsavepath = workdir+'//modelsave/'
-    data_path=workdir+"/dataset/"
+    model_name="./deberta-v3-large" # TODO:microsoft/deberta-v3-large
+    modelsavepath = workdir+'/model_weight/'
+    data_path= "./dataset/"
 
-    split_by_paragraph=True #False to split by sentence windows
-    max_sen_count=8 # for sentence sliding windows 
-    stride=3 # overlap count
+    # split_by_paragraph=True #False to split by sentence windows
+    max_length=1024 # for sentence sliding windows
+    stride=128 # overlap count
 
-    # O judge threshold
-    threshold=0.95
 
-    batch_size=10 # TODO:change batch size
+    batch_size = 8 # TODO:change batch size
     logging_steps=100
-    epochs=3
-    lr=2e-5
-    weight_decay=0.01
-    accumulation_steps=1 # batch size不同，不能直接除。有空再修
+    epochs=5
+    lr=1e-5
+    weight_decay=0.02
+    accumulation_steps=1
     evaltimes=3
     num_warmup_steps=0
 
     resume_train_epoch=0
 
- 
 
 #设置随机种子,保证模型可以复现
 def seed_everything():
