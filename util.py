@@ -4,7 +4,6 @@ if not Config.split_by_paragraph:
     from nltk.tokenize import sent_tokenize
 
 
-from unidecode import unidecode
 import copy
 from tqdm import tqdm,tqdm_notebook
 

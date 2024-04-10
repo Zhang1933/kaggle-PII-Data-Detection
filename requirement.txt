@@ -6,4 +6,3 @@ datasets
 seqeval
 sentencepiece
 nltk
--e unidecode
